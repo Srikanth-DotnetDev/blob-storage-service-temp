@@ -1,4 +1,4 @@
-namespace BlobStorage
+namespace Application
 {
     public class WeatherForecast
     {
