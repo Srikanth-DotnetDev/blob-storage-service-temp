@@ -36,10 +36,16 @@ o	Since the current implementation uses memory streams for file handling, there 
 
 
 Next Steps
+
 •	Implement Concurrency Control: Introduce locks, queues, or other concurrency control mechanisms to manage concurrent processing safely.
+
 •	Enhance Logging: Implement structured logging and ensure all critical operations and errors are logged with context.
+
 •	Secure Configuration: Move all sensitive configuration settings to a secure storage solution.
+
 •	Metadata Utilization: Define and use blob metadata to keep track of file processing status.
+
 •	Refine Scheduler: Adjust the scheduling logic to better handle long-running tasks and avoid overlap.
+
 •	Optimize Performance: Review and optimize memory usage, potentially using streaming or memory pooling techniques.
 
