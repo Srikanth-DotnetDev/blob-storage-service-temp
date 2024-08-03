@@ -49,7 +49,6 @@ namespace Personal.BlobStorage.Infrastructure
             catch (Exception ex)
             {
 
-                throw;
             }
         }
         private async Task TraverseAndProcessDirectoriesAsync(FtpClient ftpClient, string remotePath, CancellationToken cancellationToken)
