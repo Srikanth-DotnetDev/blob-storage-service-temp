@@ -1,11 +1,19 @@
 Project Overview
+
 We are working on a project that involves automating the retrieval and processing of flat files from a vendor’s FTP server. Previously, this process was manual, requiring us to upload files via an endpoint and then process all the records. The goal is to streamline and automate this workflow by directly connecting to the FTP server, automatically retrieving files, and processing them when they are updated at the source.
+
 Libraries Used
+
 •	FluentFTP: This .NET library provides a simple and efficient way to manage FTP operations. It's configured with the FTP host, username, and password, and can traverse directories recursively to download and process each file.
+
 •	Azure.Storage.Blobs: This library is used for interacting with Azure Blob Storage, allowing us to upload files from the FTP server to Azure Blob Storage.
+
 •	BackgroundService: The code runs as a background service using BackgroundService in .NET, which ensures continuous operation and can be scheduled to run at specific intervals.
+
 Current Implementation
+
 The current implementation of the service performs the following tasks:
+
 1.	FTP Connection: The service connects to the FTP server using the credentials provided.
 2.	Directory Traversal: It recursively traverses directories on the FTP server, identifying files that need to be processed.
 3.	File Processing: For each identified file, it downloads the file to a memory stream and uploads it to Azure Blob Storage.
@@ -25,6 +33,8 @@ o	Implementing a robust polling mechanism that triggers file processing at speci
 o	Implementing retry logic for transient errors, especially in network operations or blob uploads, will increase the resilience of the service against temporary failures.
 7.	Memory and Performance Optimization:
 o	Since the current implementation uses memory streams for file handling, there may be opportunities to optimize memory usage, particularly for handling large files. Using a memory pool or streaming directly to blob storage without fully loading the file into memory could be considered.
+
+
 Next Steps
 •	Implement Concurrency Control: Introduce locks, queues, or other concurrency control mechanisms to manage concurrent processing safely.
 •	Enhance Logging: Implement structured logging and ensure all critical operations and errors are logged with context.
