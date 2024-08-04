@@ -1,4 +1,10 @@
+using Azure.Storage.Blobs;
+using Microsoft.Extensions.Options;
 using Personal.BlobStorage.Infrastructure;
+using Personal.BlobStorage.Domain;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Fluent;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,7 +14,33 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddOptions<RiseCosmosDbOptions>()
+    .Bind(builder.Configuration.GetSection("Azure:RiseCosmosDB"));
+
+builder.Services.AddSingleton(serviceProvider =>
+{
+    var options = serviceProvider.GetRequiredService<IOptions<RiseCosmosDbOptions>>().Value;
+    return new CosmosClientBuilder(options.AccountEndpoint.AbsoluteUri, new DefaultAzureCredential())
+        .WithApplicationName("rise-assessment")
+        .WithSerializerOptions(new CosmosSerializationOptions
+        {
+            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
+        })
+    .Build();
+});
+builder.Services.AddSingleton(x => new BlobServiceClient(builder.Configuration.GetConnectionString("AzureBlobStorage") ?? "DefaultEndpointsProtocol=https;AccountName=blobsftpdemo3;AccountKey=6t3gR4YDX/3rad17BOT3ix0awaeD9xZBRoSix3CkfZZRelO2xHhNK+1Itt2twqb8xD2j5apNZyM3+AStYEaJdw==;EndpointSuffix=core.windows.net"));
 builder.Services.AddHostedService<Worker>();
+
+//builder.Services.AddSingleton<IBlobClientUtilityService>(serviceProvider =>
+//{
+//    var options = builder.Configuration.GetConnectionString("AzureBlobStorage") ?? "DefaultEndpointsProtocol=https;AccountName=blobsftpdemo3;AccountKey=6t3gR4YDX/3rad17BOT3ix0awaeD9xZBRoSix3CkfZZRelO2xHhNK+1Itt2twqb8xD2j5apNZyM3+AStYEaJdw==;EndpointSuffix=core.windows.net";
+//    var blobServiceClient = new BlobServiceClient(options);
+//    return ActivatorUtilities.CreateInstance<BlobClientUtilityService>(serviceProvider, blobServiceClient);
+//});
+
+builder.Services.AddSingleton<IBlobFileInfoRepository, BlobFileInfoRepository>();
+builder.Services.AddSingleton<IBlobClientUtilityService, BlobClientUtilityService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

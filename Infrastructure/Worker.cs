@@ -6,17 +6,21 @@ using Azure.Storage.Blobs;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Hosting;
 using System.ComponentModel;
+using Azure.Storage.Blobs.Models;
 
 namespace Personal.BlobStorage.Infrastructure
 {
     public class Worker : BackgroundService
     {
-        private readonly string _ftpHost;
-        private readonly string _ftpUsername;
-        private readonly string _ftpPassword;
-        private readonly string _blobStorageConnectionString;
-        private readonly string _blobContainerName;
+        private readonly string _ftpHost = "test.rebex.net";
+        private readonly string _ftpUsername = "demo";
+        private readonly string _ftpPassword = "password";
         private readonly Dictionary<string, bool> ProcessesFileHashes = new Dictionary<string, bool>();
+        private IBlobClientUtilityService _blobClientUtilityService;
+        public Worker(IBlobClientUtilityService blobClientUtilityService)
+        {
+            _blobClientUtilityService = blobClientUtilityService;
+        }
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
 
@@ -81,8 +85,7 @@ namespace Personal.BlobStorage.Infrastructure
             {
                 using (var memoryStream = ftpClient.OpenRead(filePath))
                 {
-                    var blobClient = new BlobClient(_blobStorageConnectionString, _blobContainerName, Path.GetFileName(filePath));
-                    await blobClient.UploadAsync(memoryStream, overwrite: true, cancellationToken);
+                    await _blobClientUtilityService.UploadAsync(memoryStream, filePath);
 
                 }
             }
