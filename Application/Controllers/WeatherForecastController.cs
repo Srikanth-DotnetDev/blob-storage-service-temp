@@ -66,7 +66,7 @@ namespace Application.Controllers
         [HttpPost]
         public async Task<IActionResult> UploadFile(FileUploadModel model)
         {
-            if (model == null || model.fileName == null || model.filePath == null)
+            if (model == null || model.FileName == null || model.FilePath == null)
             {
                 _logger.LogInformation("File request doesnot meet standard");
                 return BadRequest();
@@ -74,7 +74,7 @@ namespace Application.Controllers
             _logger.LogInformation("Uplading the file to blob storage");
             try
             {
-                var result = await _blobClientUtilityService.UploadFileAsync(model.fileName, model.filePath);
+                var result = await _blobClientUtilityService.UploadFileAsync(model.FileName, model.FilePath);
                 return Ok(result);
             }
             catch (Exception ex)
