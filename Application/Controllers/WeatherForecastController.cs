@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Personal.BlobStorage.Application;
 using Personal.BlobStorage.Infrastructure;
+using System;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
+using System.Xml.Serialization;
 
 namespace Application.Controllers
 {
@@ -16,30 +20,31 @@ namespace Application.Controllers
 
         private readonly ILogger<WeatherForecastController> _logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger, IBlobClientUtilityService blobClientUtilityService)
+        private readonly ILibraryUtilityService _libraryUtilityService;
+
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, IBlobClientUtilityService blobClientUtilityService, ILibraryUtilityService libraryUtilityService)
         {
             _logger = logger;
             _blobClientUtilityService = blobClientUtilityService;
+            _libraryUtilityService = libraryUtilityService;
         }
 
         [HttpGet(Name = "GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get()
         {
-            var sum = (int a, int b) => a + b;
+             var sum = (int a, int b) => a + b;
 
-            Console.WriteLine(sum(1, 4));
+             Console.WriteLine(sum(1, 4));
 
-            var numbersSet = new List<int[]>
-            {
-                new[] {1,2,3,4},
-                new[] {5,6,7,8},
-                new[] {9,10,11,12}
-            };
+             var numbersSet = new List<int[]>
+                                            {
+                                                new[] {1,2,3,4},
+                                                new[] {5,6,7,8},
+                                                new[] {9,10,11,12}
+                                            };
 
-            var num =
-                from n in numbersSet
-                where n.Count(n => n > 3) > 3
-                select n;
+            var num = from n in numbersSet
+                      select n.Sum(); 
 
             foreach (var item in num)
             {
@@ -57,6 +62,7 @@ namespace Application.Controllers
 
 
         }
+       
         [HttpPost]
         public async Task<IActionResult> UploadFile(FileUploadModel model)
         {
@@ -91,6 +97,47 @@ namespace Application.Controllers
             {
                 var result = await _blobClientUtilityService.GetBlobContentInfo(uri);
                 return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occured while retrieving to blob storage");
+                return Problem();
+            }
+        }
+        [HttpPost("UploadBlobFile")]
+        public async Task<IActionResult> UploadBlobFile(string uri)
+        {
+            if (uri == null)
+            {
+                _logger.LogInformation("Request doesnot meet standard");
+                return BadRequest();
+            }
+            _logger.LogInformation("Retrieving the blob details");
+
+            try
+            {
+                await _blobClientUtilityService.UploadBlobFileAsync(uri);
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Exception occured while retrieving to blob storage");
+                return Problem();
+            }
+        }
+        [HttpPost("GetLibraryBooks")]
+        public async Task<IActionResult> GetLibraryBooks([FromBody]LibraryFileRequest request)
+        {
+            if(request == null || request.FileName == null || request.AuthorName == null)
+            {
+                _logger.LogInformation("Request doesnot meet standard");
+                return BadRequest(nameof(request));
+            }
+            _logger.LogInformation("Retrieving the LibraryBook details");
+            try
+            {
+                var bookInfo = await _libraryUtilityService.GetBookContents(request.FileName, request.AuthorName);
+                return Ok(bookInfo);
             }
             catch (Exception ex)
             {
