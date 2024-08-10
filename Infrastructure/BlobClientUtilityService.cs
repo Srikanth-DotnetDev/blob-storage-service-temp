@@ -13,13 +13,6 @@ using Microsoft.Extensions.Logging;
 
 namespace Personal.BlobStorage.Infrastructure
 {
-
-    public interface IBlobClientUtilityService
-    {
-        Task UploadAsync(Stream memoryStream, string fileName);
-        Task<string> UploadFileAsync(string fileName, string filePath);
-        Task<Stream> GetBlobContentInfo(string uri);
-    }
     public class BlobClientUtilityService : IBlobClientUtilityService
     {
         private readonly BlobServiceClient _blobServiceClient;
@@ -60,7 +53,7 @@ namespace Personal.BlobStorage.Infrastructure
 
         public async Task<string> UploadFileAsync(string fileName, string filePath)
         {
-            using (_logger.BeginScope(new Dictionary<string, object> { ["FileName"] = fileName}) )
+            using (_logger.BeginScope(new Dictionary<string, object> { ["FileName"] = fileName }))
             {
                 _logger.LogInformation("Uploding file from repository");
 
@@ -86,7 +79,30 @@ namespace Personal.BlobStorage.Infrastructure
                     _logger.LogError(ex, "Exception occured while uploading into blob or updating");
                     throw;
                 }
-            }        }
+            }
+        }
+
+        public async Task UploadBlobFileAsync(string fileName)
+        {
+            try
+            {
+                var blobClient = _containerClient.GetBlobClient(fileName);
+                if (!(await blobClient.ExistsAsync()))
+                {
+                    return;
+                }
+                var blobFileInfo = new BlobFileInfo(fileName);
+                _logger.LogInformation("Started updating file information into container");
+                await _blobFileInfoRepository.UpsertBlobFileInfo(blobFileInfo);
+                _logger.LogInformation("Successfully updated file information into container");
+            }
+            catch (Exception ex)
+            {
+
+                _logger.LogError(ex, "Exception occured while upsering file into container");
+                throw;
+            }
+        }
 
         public async Task<Stream> GetBlobContentInfo(string uri)
         {
@@ -94,5 +110,51 @@ namespace Personal.BlobStorage.Infrastructure
             var blobContent = await blobClient.DownloadContentAsync();
             return blobContent.Value.Content.ToStream();
         }
+
+        public async Task ArchiveBlobAsync(string blobName, BlobProperties properties)
+        {
+            try
+            {
+                var blobClient = _containerClient.GetBlobClient(blobName);
+
+                if (!await blobClient.ExistsAsync())
+                {
+                    _logger.LogInformation("Blob don't exist");
+                    return;
+                }
+                var metaData = properties!.Metadata;
+                metaData["ProcessStatus"] = "Archived";
+                await blobClient.SetMetadataAsync(metaData);
+
+                await blobClient.SetAccessTierAsync(AccessTier.Archive);
+
+            }
+            catch (Exception ex)
+            {
+
+                _logger.LogError(ex, "Failed to archive the file");
+            }
+        }
+        public async Task<string> GetBlobFileInfo(string blobFileName)
+        {
+            BlobFileInfo? blobFileInfo = null;
+            try
+            {
+                 blobFileInfo = await _blobFileInfoRepository.GetBlobFileInfoAsync(blobFileName);
+
+                if(blobFileInfo == null || blobFileInfo.Metadata == null)
+                {
+                    throw new Exception($"failed to retrieve blobInfo with filename {blobFileName}");
+                }
+                return blobFileInfo.Metadata["fileInfo"];
+            }
+            catch (Exception ex)
+            {
+
+                _logger.LogError(ex, "some exception while retrieving the blob file info");
+                return string.Empty;
+            }
+        }
     }
 }
+    

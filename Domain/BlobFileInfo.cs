@@ -12,6 +12,6 @@ namespace Personal.BlobStorage.Domain
         [JsonPropertyName("id")]
         public string Id { get; set; }
         public string BlobFileName { get; set; }
-        public Dictionary<string, string> Metadata { get; set; }
+        public Dictionary<string, string>? Metadata { get; set; }
     }
 }

@@ -5,11 +5,6 @@ using Azure.Storage.Blobs;
 
 namespace Personal.BlobStorage.Infrastructure
 {
-    public interface IBlobFileInfoRepository
-    {
-        Task<BlobFileInfo?> GetBlobFileInfoAsync(string blobFileName);
-        Task UpsertBlobFileInfo(BlobFileInfo blobFileInfo);
-    }
     public class BlobFileInfoRepository : IBlobFileInfoRepository
     {
         private readonly Container _container;
