@@ -32,9 +32,9 @@ namespace Personal.BlobStorage.Infrastructure
 
                 var libraryBooks = (Library)ConstructResponseObject(typeof(Library), fileContent);
 
-                return      from book in libraryBooks.Books
-                            where book.Author == authorName
-                            select book;
+                return  from book in libraryBooks.Books
+                        where book.Author == authorName
+                        select book;
             }
             catch (Exception ex)
             {

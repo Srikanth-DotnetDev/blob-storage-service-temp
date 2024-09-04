@@ -1,4 +1,4 @@
-namespace Personal.BlobStorage.Application
+namespace NativeAot
 {
     public class WeatherForecast
     {

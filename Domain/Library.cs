@@ -8,13 +8,13 @@
 public partial class Library
 {
 
-    private LibraryBook[] booksField;
+    private List<LibraryBook> booksField;
 
     /// <remarks/>
     [System.Xml.Serialization.XmlArrayItemAttribute("Book", IsNullable = false)]
-    public LibraryBook[] Books
+    public List<LibraryBook> Books
     {
-        get
+        get 
         {
             return this.booksField;
         }

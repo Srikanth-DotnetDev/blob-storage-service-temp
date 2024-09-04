@@ -1,0 +1,10 @@
+@NativeAOTnew_HostAddress = http://localhost:5145
+
+GET {{NativeAOTnew_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+POST {{NativeAOTnew_HostAddress}}/
+
+###

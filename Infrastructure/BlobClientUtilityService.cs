@@ -15,13 +15,11 @@ namespace Personal.BlobStorage.Infrastructure
 {
     public class BlobClientUtilityService : IBlobClientUtilityService
     {
-        private readonly BlobServiceClient _blobServiceClient;
         private readonly BlobContainerClient _containerClient;
         private readonly IBlobFileInfoRepository _blobFileInfoRepository;
         private readonly ILogger<BlobClientUtilityService> _logger;
         public BlobClientUtilityService(BlobServiceClient blobServiceClient, IBlobFileInfoRepository blobFileInfoRepository, ILogger<BlobClientUtilityService> logger) 
         {
-            _blobServiceClient = blobServiceClient;
             _containerClient = blobServiceClient.GetBlobContainerClient("container1");
             _blobFileInfoRepository = blobFileInfoRepository;
             _logger = logger;
