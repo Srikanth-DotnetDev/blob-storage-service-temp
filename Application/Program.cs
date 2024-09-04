@@ -6,6 +6,7 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Fluent;
 using Azure.Identity;
 using Personal.BlobStorage.Infrastructure.HostedService;
+using Microsoft.FeatureManagement;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,46 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddAzureAppConfiguration();
+
+//builder.Configuration.AddAzureAppConfiguration(options =>
+//{
+//    var appConfigEndpoint = builder.Configuration["AppConfig:AccountEndpoint"];
+
+//    options.Connect(new Uri(appConfigEndpoint!), new DefaultAzureCredential())
+//            .ConfigureRefresh(refreshOptions =>
+//            {
+//                refreshOptions.Register("TestApp:Settings:Sentinel", refreshAll: true)
+//                       .SetCacheExpiration(TimeSpan.FromSeconds(10));
+//            })
+//           .UseFeatureFlags(featureFlagOptions => 
+//           featureFlagOptions.CacheExpirationInterval = TimeSpan.FromSeconds(10)
+//           );
+//});
+
+builder.Configuration.AddAzureAppConfiguration(options =>
+{
+    var appConfigEndpoint = builder.Configuration["AppConfig:AccountEndpoint"]!;
+    options.Connect(new Uri(appConfigEndpoint), new DefaultAzureCredential())
+    .UseFeatureFlags();
+    builder.Services.AddSingleton(options.GetRefresher());
+});
+
+
+//IConfiguration configuration = new ConfigurationBuilder()
+//    .AddAzureAppConfiguration(options =>
+//    {
+//        options.Connect(Environment.GetEnvironmentVariable("ConnectionString"))
+//            .UseFeatureFlags();
+//    }).Build();
+//IFeatureDefinitionProvider featureDefinitionProvider = new ConfigurationFeatureDefinitionProvider(configuration);
+
+//IFeatureManager featureManager = new FeatureManager(
+//    featureDefinitionProvider,
+//    new FeatureManagementOptions());
+
+builder.Services.AddFeatureManagement();
 
 builder.Services.AddOptions<RiseCosmosDbOptions>()
     .Bind(builder.Configuration.GetSection("Azure:RiseCosmosDB"));
@@ -48,8 +89,16 @@ builder.Services.AddSingleton<IBlobFileEventHandler, BlobFileEventHandler>();
 
 builder.Services.AddSingleton<IBlobFileInfoRepository, BlobFileInfoRepository>();
 builder.Services.AddSingleton<IBlobClientUtilityService, BlobClientUtilityService>();
-builder.Services.AddHostedService<BlobStorageProcessor>();
+//builder.Services.AddHostedService<BlobStorageProcessor>();
+
+//builder.Services.AddSingleton(provider =>
+//{
+//    var refreshers = provider.GetRequiredService<IConfigurationRefresherProvider>().Refreshers;
+//    return refreshers.First();
+//});
+//builder.Services.AddHostedService<AzureAppConfigRefreshService>();
 builder.Services.AddSingleton<ILibraryUtilityService, LibraryUtilityService>();
+builder.Services.AddSingleton<IProductFileRepository, ProductFileRepository>();
 
 var app = builder.Build();
 

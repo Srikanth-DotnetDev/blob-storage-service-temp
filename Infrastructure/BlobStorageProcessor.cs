@@ -6,6 +6,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Azure.Cosmos;
 using Personal.BlobStorage.Domain;
+using Newtonsoft.Json.Linq;
+using Azure.Storage.Blobs;
+using Personal.BlobStorage.Infrastructure;
 
 
 namespace Personal.BlobStorage.Infrastructure.HostedService
@@ -26,7 +29,7 @@ namespace Personal.BlobStorage.Infrastructure.HostedService
             var leaseContainer = cosmosClient.GetContainer(options.Value.DatabaseName, options.Value.LeaseContainerName);
 
 
-            _cfp = blobContainer.GetChangeFeedProcessorBuilder<BlobFileInfo>(options.Value.ProcessorName, ProcessChanges)
+            _cfp = blobContainer.GetChangeFeedProcessorBuilder<JObject>(options.Value.ProcessorName, ProcessChanges)
                                        .WithLeaseContainer(leaseContainer)
                                        .WithInstanceName(options.Value.InstanceName)
                                        .WithStartTime(DateTime.Now.AddDays(-365))
@@ -43,14 +46,16 @@ namespace Personal.BlobStorage.Infrastructure.HostedService
         {
             await _cfp.StopAsync();
         }
-        private async Task ProcessChanges(IReadOnlyCollection<BlobFileInfo>? blobFileInfos, CancellationToken cancellationToken)
+        private async Task ProcessChanges(IReadOnlyCollection<JObject>? objects, CancellationToken cancellationToken)
         {
-            if ( blobFileInfos == null || blobFileInfos.Count == 0 ) { return; }
-            foreach (var blobFileInfo in blobFileInfos)
+
+            foreach (JObject obj in objects)
             {
-                await _blobFileEventHandler.Handle(blobFileInfo);
+                var blobFileInfo = obj.ToObject<BlobFileInfo>();
+                await _blobFileEventHandler.Handle(blobFileInfo!);
             }
                 
         }
     }
 }
+

@@ -1,0 +1,22 @@
+﻿@Application_HostAddress = https://localhost:7171
+
+GET {{Application_HostAddress}}/blobstoragecontainer
+
+###
+
+GET {{Application_HostAddress}}/blobstoragecontainer
+
+###
+
+POST {{Application_HostAddress}}/blobstoragecontainer
+Content-Type: application/json
+
+{
+  //FileUploadModel
+}
+
+###
+
+GET {{Application_HostAddress}}/blobstoragecontainer
+
+###
