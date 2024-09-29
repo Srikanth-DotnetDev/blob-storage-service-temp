@@ -15,7 +15,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.MapPost("/", () =>
+app.MapGet("/", () =>
 {
     var numbers = from n in Enumerable.Range(100, 50)
                   select (Number: n, OddEven: n % 2 == 0 ? "Even" : "Odd");
@@ -26,7 +26,7 @@ app.MapPost("/", () =>
         Console.WriteLine("The number {0} is {1}.", n.Number, n.OddEven);
     }
     return Results.Ok();
-});
+}).WithName("dsfdsf").WithSummary("dsfiudsf");
 
 
 

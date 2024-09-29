@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Infrastructure
+namespace Domain
 {
-    internal class Class1
+    public class LocalExtensions
     {
     }
 }

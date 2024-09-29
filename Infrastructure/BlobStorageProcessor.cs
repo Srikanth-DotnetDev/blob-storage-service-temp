@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Azure.Cosmos;
 using Personal.BlobStorage.Domain;
-using Newtonsoft.Json.Linq;
-using Azure.Storage.Blobs;
-using Personal.BlobStorage.Infrastructure;
+using System.Text.Json;
+using Azure.Messaging;
 
 
 namespace Personal.BlobStorage.Infrastructure.HostedService
@@ -22,18 +18,18 @@ namespace Personal.BlobStorage.Infrastructure.HostedService
         public BlobStorageProcessor(ILogger<BlobStorageProcessor> logger, IOptions<RiseCosmosDbOptions> options, IBlobFileEventHandler blobFileEventHandler, CosmosClient cosmosClient)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            //_blobFileEventHandler = blobFileEventHandler;
 
-            var blobContainer = cosmosClient.GetContainer(options.Value.DatabaseName, options.Value.BlobFileInfoRepositoryRepositoryName);
+            var blobContainer = cosmosClient.GetContainer(options.Value.DatabaseName, options.Value.BlobFileInfoRepositoryName);
 
             var leaseContainer = cosmosClient.GetContainer(options.Value.DatabaseName, options.Value.LeaseContainerName);
 
 
-            _cfp = blobContainer.GetChangeFeedProcessorBuilder<JObject>(options.Value.ProcessorName, ProcessChanges)
+            _cfp = blobContainer.GetChangeFeedProcessorBuilder<CloudEvent>(options.Value.ProcessorName, ProcessChanges)
                                        .WithLeaseContainer(leaseContainer)
                                        .WithInstanceName(options.Value.InstanceName)
-                                       .WithStartTime(DateTime.Now.AddDays(-365))
+                                       .WithStartTime(DateTime.MinValue.ToUniversalTime())
                                        .Build();
+
             _blobFileEventHandler = blobFileEventHandler ?? throw new ArgumentNullException( nameof(blobFileEventHandler));
         }
 
@@ -46,15 +42,40 @@ namespace Personal.BlobStorage.Infrastructure.HostedService
         {
             await _cfp.StopAsync();
         }
-        private async Task ProcessChanges(IReadOnlyCollection<JObject>? objects, CancellationToken cancellationToken)
+        private async Task ProcessChanges(IReadOnlyCollection<CloudEvent>? cloudEvents, CancellationToken cancellationToken)
         {
-
-            foreach (JObject obj in objects)
+            if(cloudEvents is null || !cloudEvents.Any())
             {
-                var blobFileInfo = obj.ToObject<BlobFileInfo>();
-                await _blobFileEventHandler.Handle(blobFileInfo!);
+                _logger.LogInformation("There are no objects to processs");
+                return;
             }
-                
+            _logger.LogInformation("Starting to process the blob-file-info");
+            foreach (var cloudEvent in cloudEvents)
+            {
+                try
+                {
+                    if(cloudEvent is null or { Data : null})
+                    {
+                        _logger.LogInformation("The event data is null");
+                        continue;
+                    }
+
+                    var blobFileInfo = JsonSerializer.Deserialize<BlobFileInfo>(cloudEvent.Data.ToString()!);
+
+                    if(blobFileInfo is null)
+                    {
+                        _logger.LogInformation("An issue occured while deserializing cloud event data into blob-file-info");
+                        continue;
+                    }
+                    await _blobFileEventHandler.Handle(blobFileInfo);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "An error occurred while processing the blob-file-info");
+                    continue;
+                }
+            }
+            _logger.LogInformation("Successfully processed blob-file-info");
         }
     }
 }

@@ -4,61 +4,63 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using Azure.Storage.Blobs;
 using Personal.BlobStorage.Domain;
+using Azure.Storage.Blobs.Models;
 namespace Personal.BlobStorage.Infrastructure
 {
         
     public class BlobFileEventHandler : IBlobFileEventHandler
     {
         private readonly ILogger<BlobFileEventHandler> _logger;
-        private readonly BlobContainerClient _containerClient;
+        private readonly IBlobClientUtilityService _blobClientUtilityService;
         //private readonly IStudentAssessmentRawDataHandler _studentAssessmentRawDataHandler;
 
-        public BlobFileEventHandler(ILogger<BlobFileEventHandler> _logger, BlobServiceClient blobServiceClient/*, IStudentAssessmentRawDataHandler studentAssessmentRawDataHandler*/)
+        public BlobFileEventHandler(ILogger<BlobFileEventHandler> _logger, IBlobClientUtilityService blobClientUtilityService/*, IStudentAssessmentRawDataHandler studentAssessmentRawDataHandler*/)
         {
             this._logger = _logger ?? throw new ArgumentNullException(nameof(_logger));
-            _containerClient = blobServiceClient.GetBlobContainerClient("container1") ?? throw new ArgumentNullException(nameof(blobServiceClient));
             //_studentAssessmentRawDataHandler = studentAssessmentRawDataHandler;
-        }
-        public async Task<Stream> GetBlobContentInfo(string uri)
-        {
-            var blobClient = _containerClient.GetBlobClient(uri);
-            var blobContent = await blobClient.DownloadContentAsync();
-            return blobContent.Value.Content.ToStream();
+            _blobClientUtilityService = blobClientUtilityService;
         }
 
         public async Task Handle(BlobFileInfo blobFileInfo)
         {
-            var fileName = blobFileInfo.BlobFileName;
             _logger.LogInformation("Processing file");
-            using (var memoryStream = new MemoryStream())
+            try
             {
-                try
-                {
-                    var blobClient = _containerClient.GetBlobClient(fileName);
-                    await blobClient.DownloadToAsync(memoryStream);
-                    memoryStream.Position = 0;
+                var blobFileName = blobFileInfo.BlobFileName;
 
-                    if (fileName.ToLower().EndsWith(".csv"))
-                    {
-                        var csv = "";
-                        var line = "";
-                        using (var sr = new StreamReader(memoryStream))
-                        {
-                            var header = sr.ReadLine();
-                            while (!sr.EndOfStream)
-                            {
-                                line = sr.ReadLine();
-                                csv = header + "\r\n" + line;
-                                Console.WriteLine(csv);
-                                //await _studentAssessmentRawDataHandler.Handle(csv, fileName);
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
+                string? header, allLines;
+                using (var stream = await _blobClientUtilityService.GetBlobContentInfo(blobFileName))
                 {
-                    _logger.LogError(ex, "Failed to upload file to blob storage.");
+                    if (stream is null)
+                    {
+                        _logger.LogWarning("Stream is null, exiting the method");
+                        return;
+                    }
+                    using var sr = new StreamReader(stream);
+                    header = sr.ReadLine();
+
+                    if (header is null)
+                    {
+                        _logger.LogWarning("The file is empty, exiting the method");
+                        return;
+                    }
+                    allLines = await sr.ReadToEndAsync();
                 }
+
+                var rows = allLines.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+                                   .Select((line, index) => new { Line = header + "\r\n" + line, RowNumber = index + 1 })
+                                   .ToArray();
+
+
+                rows.ToList().ForEach(row =>
+                {
+                    //var result = await _dataHandler.Handle(row.Line, blobFileName, row.RowNumber);
+                    Console.WriteLine(row);
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to upload file to blob storage.");
             }
         }
     }

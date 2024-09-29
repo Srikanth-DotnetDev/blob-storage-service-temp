@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", "Infrastru
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "Application\Application.csproj", "{63D1DF38-B7B8-421D-9D5A-AF070B259DDA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NativeAOTnew", "NativeAOTnew\NativeAOTnew.csproj", "{30686A2F-A351-4761-A136-47AF24AA1231}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NativeAOTnew", "NativeAOTnew\NativeAOTnew.csproj", "{30686A2F-A351-4761-A136-47AF24AA1231}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorApp1", "BlazorApp1\BlazorApp1.csproj", "{248B0B64-D40E-4417-97E0-20BBEB2F847E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{30686A2F-A351-4761-A136-47AF24AA1231}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30686A2F-A351-4761-A136-47AF24AA1231}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30686A2F-A351-4761-A136-47AF24AA1231}.Release|Any CPU.Build.0 = Release|Any CPU
+		{248B0B64-D40E-4417-97E0-20BBEB2F847E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{248B0B64-D40E-4417-97E0-20BBEB2F847E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{248B0B64-D40E-4417-97E0-20BBEB2F847E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{248B0B64-D40E-4417-97E0-20BBEB2F847E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -18,19 +18,16 @@ namespace Personal.BlobStorage.Infrastructure
         private readonly BlobContainerClient _containerClient;
         private readonly IBlobFileInfoRepository _blobFileInfoRepository;
         private readonly ILogger<BlobClientUtilityService> _logger;
-        public BlobClientUtilityService(BlobServiceClient blobServiceClient, IBlobFileInfoRepository blobFileInfoRepository, ILogger<BlobClientUtilityService> logger) 
+        public BlobClientUtilityService(BlobServiceClient blobServiceClient, IBlobFileInfoRepository blobFileInfoRepository, ILogger<BlobClientUtilityService> logger)
         {
             _containerClient = blobServiceClient.GetBlobContainerClient("container1");
             _blobFileInfoRepository = blobFileInfoRepository;
             _logger = logger;
         }
-        private readonly string _blobStorageConnectionString = "DefaultEndpointsProtocol=https;AccountName=blobsftpdemo3;AccountKey=6t3gR4YDX/3rad17BOT3ix0awaeD9xZBRoSix3CkfZZRelO2xHhNK+1Itt2twqb8xD2j5apNZyM3+AStYEaJdw==;EndpointSuffix=core.windows.net";
-        private readonly string _blobContainerName = "container1";
         public async Task UploadAsync(Stream memoryStream, string fileName)
         {
-            var blobClient = new BlobClient(_blobStorageConnectionString, _blobContainerName, Path.GetFileName(fileName));
 
-            //var blobClient = _containerClient.GetBlobClient(fileName);
+            var blobClient = _containerClient.GetBlobClient(fileName);
 
             if (await blobClient.ExistsAsync())
             {
@@ -58,8 +55,9 @@ namespace Personal.BlobStorage.Infrastructure
                 try
                 {
                     _logger.LogInformation("Started uploading file into blob");
-                    var blobClient = _containerClient.GetBlobClient(fileName);
-                    await blobClient.UploadAsync(filePath);
+                    var blobClient = _containerClient.GetBlobClient(filePath);
+
+                    await blobClient.UploadAsync(fileName);
                     _logger.LogInformation("Started uploaded file into blob");
 
 
@@ -67,6 +65,7 @@ namespace Personal.BlobStorage.Infrastructure
                     var blobFileInfo = new BlobFileInfo(fileName);
                     _logger.LogInformation("Started updating file information into container");
                     await _blobFileInfoRepository.UpsertBlobFileInfo(blobFileInfo);
+
                     _logger.LogInformation("Successfully updated file information into container");
 
                     return blobClient.Uri.AbsoluteUri;
@@ -89,7 +88,8 @@ namespace Personal.BlobStorage.Infrastructure
                 {
                     return;
                 }
-                var blobFileInfo = new BlobFileInfo(fileName);
+                var metaData = new Dictionary<string, string>() { ["FileName"] = fileName };
+                var blobFileInfo = new BlobFileInfo(fileName, metaData);
                 _logger.LogInformation("Started updating file information into container");
                 await _blobFileInfoRepository.UpsertBlobFileInfo(blobFileInfo);
                 _logger.LogInformation("Successfully updated file information into container");
@@ -108,6 +108,14 @@ namespace Personal.BlobStorage.Infrastructure
             var blobContent = await blobClient.DownloadContentAsync();
             return blobContent.Value.Content.ToStream();
         }
+
+        //public async Task<Stream> GetBlobContentInfo(string uri)
+        //{
+        //    var blobItemList = _containerClient.GetBlobsAsync(BlobTraits.All, BlobStates.None, "046C3519AC34E").ToBlockingEnumerable().ToList();
+        //    var blobClient = _containerClient.GetBlobClient(blobItemList.First().Name);
+        //    var blobContent = await blobClient.DownloadContentAsync();
+        //    return blobContent.Value.Content.ToStream();
+        //}
 
         public async Task ArchiveBlobAsync(string blobName, BlobProperties properties)
         {
@@ -140,11 +148,11 @@ namespace Personal.BlobStorage.Infrastructure
             {
                  blobFileInfo = await _blobFileInfoRepository.GetBlobFileInfoAsync(blobFileName);
 
-                if(blobFileInfo == null || blobFileInfo.Metadata == null)
+                if(blobFileInfo == null || blobFileInfo.MetaData == null)
                 {
                     throw new Exception($"failed to retrieve blobInfo with filename {blobFileName}");
                 }
-                return blobFileInfo.Metadata["fileInfo"];
+                return blobFileInfo.MetaData["fileInfo"];
             }
             catch (Exception ex)
             {
