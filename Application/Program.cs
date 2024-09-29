@@ -7,8 +7,14 @@ using Microsoft.Azure.Cosmos.Fluent;
 using Azure.Identity;
 using Personal.BlobStorage.Infrastructure.HostedService;
 using Microsoft.FeatureManagement;
+using Microsoft.Extensions.Configuration.AzureAppConfiguration;
+using System.Text.Json;
+using Domain;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+Person person = new Person("srikanth", DateTime.Parse("1999-09-06"));
 
 // Add services to the container.
 
@@ -19,29 +25,46 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddAzureAppConfiguration();
 
-//builder.Configuration.AddAzureAppConfiguration(options =>
-//{
-//    var appConfigEndpoint = builder.Configuration["AppConfig:AccountEndpoint"];
-
-//    options.Connect(new Uri(appConfigEndpoint!), new DefaultAzureCredential())
-//            .ConfigureRefresh(refreshOptions =>
-//            {
-//                refreshOptions.Register("TestApp:Settings:Sentinel", refreshAll: true)
-//                       .SetCacheExpiration(TimeSpan.FromSeconds(10));
-//            })
-//           .UseFeatureFlags(featureFlagOptions => 
-//           featureFlagOptions.CacheExpirationInterval = TimeSpan.FromSeconds(10)
-//           );
-//});
-
 builder.Configuration.AddAzureAppConfiguration(options =>
 {
-    var appConfigEndpoint = builder.Configuration["AppConfig:AccountEndpoint"]!;
-    options.Connect(new Uri(appConfigEndpoint), new DefaultAzureCredential())
-    .UseFeatureFlags();
-    builder.Services.AddSingleton(options.GetRefresher());
+    var appConfigEndpoint = builder.Configuration["AppConfig:AccountEndpoint"];
+
+    options.Connect(new Uri(appConfigEndpoint!), new DefaultAzureCredential())
+            .Select("student-service:*", builder.Configuration["AppConfig:Label"])
+            .ConfigureRefresh(refreshOptions =>
+            {
+                refreshOptions.Register("student-service.NamebasedUUID:EnvironmentId", refreshAll: true)
+                       .SetCacheExpiration(TimeSpan.FromSeconds(10));
+            }
+           );
 });
 
+builder.Services.Configure<NameBasedUUIDOptions>(builder.Configuration.GetSection("student-service.NamebasedUUID") ?? builder.Configuration.GetSection("NamebasedUUID"));
+
+
+//builder.Configuration.AddAzureAppConfiguration(options =>
+//{
+//    var appConfigEndpoint = builder.Configuration["AppConfig:AccountEndpoint"]!;
+//    options.Connect(new Uri(appConfigEndpoint), new DefaultAzureCredential())
+//    .UseFeatureFlags();
+//    builder.Services.AddSingleton(options.GetRefresher());
+//});
+
+
+//builder.Configuration.AddAzureAppConfiguration(options =>
+//{
+//    var url = builder.Configuration.GetSection("AppConfig:AccountEndpoint").Value;
+//    options.Connect(new Uri(url!), new DefaultAzureCredential())
+//           // Load all keys that start with `TestApp:` and have no label
+//           .Select("student-service:*", "dev")
+//           // Configure to reload configuration if the registered sentinel key is modified
+//           .ConfigureRefresh(refreshOptions =>
+//                refreshOptions.Register("student-service.NamebasedUUID.EnvironmentId", refreshAll: true));
+//});
+
+//var strName = builder.Configuration[" student-service.NamebasedUUID:EnvironmentId"];
+
+//builder.Services.Configure<NameBasedUUIDOptions>(builder.Configuration.GetSection(" student-service.NamebasedUUID"));
 
 //IConfiguration configuration = new ConfigurationBuilder()
 //    .AddAzureAppConfiguration(options =>
@@ -57,20 +80,19 @@ builder.Configuration.AddAzureAppConfiguration(options =>
 
 builder.Services.AddFeatureManagement();
 
-builder.Services.AddOptions<RiseCosmosDbOptions>()
+builder.Services.AddOptions<RiseCosmosDbOptions>() 
     .Bind(builder.Configuration.GetSection("Azure:RiseCosmosDB"));
 
 builder.Services.AddSingleton(serviceProvider =>
 {
     var options = serviceProvider.GetRequiredService<IOptions<RiseCosmosDbOptions>>().Value;
-    return new CosmosClientBuilder(options.AccountEndpoint.AbsoluteUri, new DefaultAzureCredential()).WithConnectionModeDirect(portReuseMode : PortReuseMode.ReuseUnicastPort)
+    return new CosmosClientBuilder(options.AccountEndpoint.AbsoluteUri, new DefaultAzureCredential())
         .WithApplicationName("rise-assessment")
-        .WithSerializerOptions(new CosmosSerializationOptions
-        {
-            PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase,
-            IgnoreNullValues = true
-        })
-    .Build();
+        .WithSerializerOptions(new CosmosSerializationOptions() 
+            { 
+                PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
+            })
+        .Build();
 });
 builder.Services.AddSingleton(x => new BlobServiceClient(builder.Configuration.GetConnectionString("AzureBlobStorage") ?? "DefaultEndpointsProtocol=https;AccountName=blobsftpdemo3;AccountKey=6t3gR4YDX/3rad17BOT3ix0awaeD9xZBRoSix3CkfZZRelO2xHhNK+1Itt2twqb8xD2j5apNZyM3+AStYEaJdw==;EndpointSuffix=core.windows.net"));
 //builder.Services.AddHostedService<Worker>();
@@ -89,7 +111,7 @@ builder.Services.AddSingleton<IBlobFileEventHandler, BlobFileEventHandler>();
 
 builder.Services.AddSingleton<IBlobFileInfoRepository, BlobFileInfoRepository>();
 builder.Services.AddSingleton<IBlobClientUtilityService, BlobClientUtilityService>();
-//builder.Services.AddHostedService<BlobStorageProcessor>();
+builder.Services.AddHostedService<BlobStorageProcessor>();
 
 //builder.Services.AddSingleton(provider =>
 //{
