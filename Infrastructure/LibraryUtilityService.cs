@@ -1,10 +1,14 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+using System.Text.Json;
+using Newtonsoft.Json;
+using System.Xml;
 
 namespace Personal.BlobStorage.Infrastructure
 {
@@ -12,17 +16,21 @@ namespace Personal.BlobStorage.Infrastructure
     {
         private readonly ILogger<LibraryUtilityService> _logger;
         private readonly IBlobClientUtilityService _blobClientUtilityService;
+        private readonly IOptions<NameBasedUUIDOptions> _options;
 
-        public LibraryUtilityService(ILogger<LibraryUtilityService> logger, IBlobClientUtilityService blobClientUtilityService)
+        public LibraryUtilityService(ILogger<LibraryUtilityService> logger, IBlobClientUtilityService blobClientUtilityService, IOptions<NameBasedUUIDOptions> options)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _blobClientUtilityService = blobClientUtilityService ?? throw new ArgumentNullException(nameof(blobClientUtilityService));
+            _options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
         public async Task<IEnumerable<LibraryBook>?> GetBookContents(string fileName, string authorName)
         {
             try
             {
+
+                string strName = _options.Value.EnvironmentId;
                 var fileContent = await _blobClientUtilityService.GetBlobFileInfo(fileName);
 
                 if(fileContent == null)
@@ -30,7 +38,11 @@ namespace Personal.BlobStorage.Infrastructure
                     throw new Exception($"file contents are empty");
                 }
 
-                var libraryBooks = (Library)ConstructResponseObject(typeof(Library), fileContent);
+                XmlDocument doc = new XmlDocument();
+
+                doc.LoadXml(fileContent);
+
+                var libraryBooks = JsonConvert.DeserializeObject<Library>(JsonConvert.SerializeXmlNode(doc, Newtonsoft.Json.Formatting.None, true))!;
 
                 return  from book in libraryBooks.Books
                         where book.Author == authorName
@@ -56,13 +68,13 @@ namespace Personal.BlobStorage.Infrastructure
             }
         }
 
-        private static object ConstructResponseObject(Type type, string responseObject)
+        private static object? ConstructResponseObject(Type type, string responseObject)
         {
             XmlSerializer xmlSerializer = new XmlSerializer(type);
 
             using (StringReader reader = new StringReader(responseObject))
             {
-                return xmlSerializer.Deserialize(reader) ?? new Object();
+                return xmlSerializer.Deserialize(reader);
             }
         }
         #endregion

@@ -21,7 +21,7 @@ namespace Personal.BlobStorage.Infrastructure
             {
                 throw new ArgumentNullException(nameof(cosmosClient));
             }
-            _container = cosmosClient.GetContainer(_options.Value.DatabaseName, _options.Value.BlobFileInfoRepositoryRepositoryName);
+            _container = cosmosClient.GetContainer(_options.Value.DatabaseName, _options.Value.BlobFileInfoRepositoryName);
             _logger = logger;
         }
 
@@ -52,20 +52,5 @@ namespace Personal.BlobStorage.Infrastructure
                 return;
             }
         }
-        //public async Task<IEnumerable<BlobFileInfo>> UpsertRandomBlobInfo()
-        //{
-            //var queryable = _container.GetItemLinqQueryable<BlobFileInfo>();  
-            //using FeedIterator<BlobFileInfo> feed = queryable.Where(p => p.Metadata!=null && p.Metadata["subMeasure"] == "Writing").ToFeedIterator();
-            //var results = new List<BlobFileInfo>();
-            //while(feed.HasMoreResults)
-            //{
-            //    var response = await feed.ReadNextAsync();
-            //    foreach (var item in response)
-            //    {
-            //        results.Add(item);
-            //    }
-            //}
-            //return results;
-        //}
     }
 }
