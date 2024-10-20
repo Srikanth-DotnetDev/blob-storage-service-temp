@@ -10,12 +10,13 @@ using System.Linq;
 using Microsoft.FeatureManagement;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using Personal.BlobStorage.Domain;
+using Domain;
 
 namespace Personal.BlobStorage.Application
 {
     [ApiController]
     [Route("[controller]")]
-    public class BlobStorageContainer : ControllerBase
+    public class BlobStorageController : ControllerBase
     {
         private readonly IBlobClientUtilityService _blobClientUtilityService;
         private static readonly string[] Summaries = new[]
@@ -23,7 +24,7 @@ namespace Personal.BlobStorage.Application
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
 
-        private readonly ILogger<BlobStorageContainer> _logger;
+        private readonly ILogger<BlobStorageController> _logger;
 
         private readonly ILibraryUtilityService _libraryUtilityService;
 
@@ -33,7 +34,7 @@ namespace Personal.BlobStorage.Application
         //private readonly IConfigurationRefresher _refresher;
         //private readonly IOptions<NameBasedUUIDOptions> _options;
 
-        public BlobStorageContainer(ILogger<BlobStorageContainer> logger, IBlobClientUtilityService blobClientUtilityService, 
+        public BlobStorageController(ILogger<BlobStorageController> logger, IBlobClientUtilityService blobClientUtilityService, 
             ILibraryUtilityService libraryUtilityService, IProductFileRepository productFileRepository/*, IFeatureManager featureManager,*/
             /*IConfigurationRefresher refresher, IOptions<NameBasedUUIDOptions> options*/)
         {
@@ -50,6 +51,8 @@ namespace Personal.BlobStorage.Application
         [HttpGet(Name = "GetWeatherForecast")]
         public async Task<IEnumerable<WeatherForecast>> Get()
         {
+            //var str = System.Net.HttpStatusCode.TooManyRequests.ToString();
+            //Console.WriteLine(str + "" + str.GetType());
             // var sum = (int a, int b) => a + b;
 
             // Console.WriteLine(sum(1, 4));
@@ -89,7 +92,26 @@ namespace Personal.BlobStorage.Application
             //    Console.WriteLine(string.Join(",", item));
             //} 
 
-            
+            var studentId = "1232324";
+
+            var studentLocalId = "";
+
+            var leaNumber = "";
+
+            //var stu =  studentId switch
+            //{
+            //    _ when !string.IsNullOrEmpty(studentId) => new LegacyStatewideStudentIdentifier(studentId).ToString(),
+            //    _ when !string.IsNullOrEmpty(studentLocalId) => new LeaStudentIdentifier(new LeaNumber(leaNumber), studentLocalId).ToString(),
+            //    _ => null
+            //};
+
+            var n = new StudentRecordLocator($"{studentId}@ssid", $"{studentLocalId}@lea{leaNumber}").ToString();
+
+            List<int> list1 = [1,2, 3 ];
+
+            list1[1] = 2;
+
+
 
             int[] numbers = { 5, 10, 8, 3, 6, 12 };
 
@@ -108,50 +130,50 @@ namespace Personal.BlobStorage.Application
                 Console.Write(i + " ");
             }
 
-            string str = "srikanth";
-            string str2 = "kan";
-            Console.WriteLine(str.IndexOf(str2));
-            Console.WriteLine(str.GetHashCode());
-            Console.WriteLine(System.Environment.NewLine);
-            foreach (int i in numQuery2)
-            {
-                Console.Write(i + " ");
-            }
-
-
-            var coordinates = new Coords(1, 2);
-            Console.WriteLine(coordinates);
-            //await _refresher.TryRefreshAsync(new CancellationToken());
-            //if (!await _featureManager.IsEnabledAsync("rise-assessments-service.rise-ftp-processor"))
+            //string str = "srikanth";
+            //string str2 = "kan";
+            //Console.WriteLine(str.IndexOf(str2));
+            //Console.WriteLine(str.GetHashCode());
+            //Console.WriteLine(System.Environment.NewLine);
+            //foreach (int i in numQuery2)
             //{
-            //    //await _productFileRepository.UpsertItemAsync();
-            //    return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            //    {
-            //        Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-
-            //        TemperatureC = Random.Shared.Next(-20, 55),
-            //        Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            //    })
-            //    .ToArray();
+            //    Console.Write(i + " ");
             //}
 
 
-            List<string> names = ["srikanth", "Kranthi", "srikanth", "Chandhu", "srikanth"];
-            names = names.Distinct().ToList();  
+            //var coordinates = new Coords(1, 2);
+            //Console.WriteLine(coordinates);
+            ////await _refresher.TryRefreshAsync(new CancellationToken());
+            ////if (!await _featureManager.IsEnabledAsync("rise-assessments-service.rise-ftp-processor"))
+            ////{
+            ////    //await _productFileRepository.UpsertItemAsync();
+            ////    return Enumerable.Range(1, 5).Select(index => new WeatherForecast
+            ////    {
+            ////        Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
 
-            foreach (var item in names.Distinct())
-            {
-                Console.WriteLine(item);
-            }
+            ////        TemperatureC = Random.Shared.Next(-20, 55),
+            ////        Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+            ////    })
+            ////    .ToArray();
+            ////}
+
+
+            //List<string> names = ["srikanth", "Kranthi", "srikanth", "Chandhu", "srikanth"];
+            //names = names.Distinct().ToList();  
+
+            //foreach (var item in names.Distinct())
+            //{
+            //    Console.WriteLine(item);
+            //}
 
             return null!;
 
-            //var a = new []{1,2,3,4,5};
-            //foreach (var item in a)
-            //{
-            //    var evenOdd = item %2 == 0 ? "Even" : "Odd";
-            //    Console.WriteLine($"Number is {evenOdd}");
-            //}
+            ////var a = new []{1,2,3,4,5};
+            ////foreach (var item in a)
+            ////{
+            ////    var evenOdd = item %2 == 0 ? "Even" : "Odd";
+            ////    Console.WriteLine($"Number is {evenOdd}");
+            ////}
         }
        
         [HttpPost]

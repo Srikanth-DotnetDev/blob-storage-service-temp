@@ -10,6 +10,7 @@ using Microsoft.FeatureManagement;
 using Microsoft.Extensions.Configuration.AzureAppConfiguration;
 using System.Text.Json;
 using Domain;
+using System.Security.Cryptography;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -94,7 +95,7 @@ builder.Services.AddSingleton(serviceProvider =>
             })
         .Build();
 });
-builder.Services.AddSingleton(x => new BlobServiceClient(builder.Configuration.GetConnectionString("AzureBlobStorage") ?? "DefaultEndpointsProtocol=https;AccountName=blobsftpdemo3;AccountKey=6t3gR4YDX/3rad17BOT3ix0awaeD9xZBRoSix3CkfZZRelO2xHhNK+1Itt2twqb8xD2j5apNZyM3+AStYEaJdw==;EndpointSuffix=core.windows.net"));
+builder.Services.AddSingleton(x => new BlobServiceClient(builder.Configuration.GetConnectionString("AzureBlobStorage")));
 //builder.Services.AddHostedService<Worker>();
 
 //builder.Services.AddSingleton<IBlobClientUtilityService>(serviceProvider =>
